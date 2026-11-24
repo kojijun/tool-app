@@ -185,6 +185,11 @@ document
 .classList.add('active');
 
 }
+const FIREBASE_MODE = true;
+const FIREBASE_PROJECT = "tool-app-a7019";
+
+console.log("Firebase Project:", FIREBASE_PROJECT);
+
 let tools = JSON.parse(localStorage.getItem("tools"));
 let histories =
 JSON.parse(localStorage.getItem("histories")) || [];
