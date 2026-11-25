@@ -230,7 +230,7 @@ tools = [
 
 }
 
-function saveData(){
+async function saveData(){
 
 localStorage.setItem(
 "tools",
@@ -242,8 +242,17 @@ localStorage.setItem(
 JSON.stringify(histories)
 );
 
-}
+  if(FIREBASE_MODE){
 
+    setDoc(
+      doc(db,"data","shared"),
+      {
+        tools:tools,
+        histories:histories
+      }
+    );
+    
+}
 
 function addTool(){
 
