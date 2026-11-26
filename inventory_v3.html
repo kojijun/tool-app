@@ -207,7 +207,7 @@ tools = [
 
 }
 
-async function saveData(){
+function saveData(){
 
 localStorage.setItem(
 "tools",
@@ -219,19 +219,8 @@ localStorage.setItem(
 JSON.stringify(histories)
 );
 
-  if(FIREBASE_MODE){
-
-    setDoc(
-      doc(db,"data","shared"),
-      {
-        tools:tools,
-        histories:histories
-      }
-    );
-
-  }
-
 }
+
 
 function addTool(){
 
@@ -617,10 +606,7 @@ html += "</table>";
 document.getElementById("toolListView").innerHTML = html;
 
 }
-
-  console.log("Firebase Version Start");
-
 </script>
 
 </body>
-</html>
+</html>9:41 2026/11/23
