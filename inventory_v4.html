@@ -177,6 +177,21 @@ onkeyup="drawHistory()">
 
 <script>
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAywopmxjwHMPYRUdwna1RS4O3j5OlKyMw",
+  authDomain: "tool-app-a7019.firebaseapp.com",
+  projectId: "tool-app-a7019",
+  storageBucket: "tool-app-a7019.firebasestorage.app",
+  messagingSenderId: "956926015004",
+  appId: "1:956926015004:web:7fe6ce802e6911a85951d9"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+console.log("Firebase Connected");
+
 function showPage(pageId){
 
 document.querySelectorAll('.page')
