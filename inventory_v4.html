@@ -552,9 +552,31 @@ document.getElementById("historyList").innerHTML = html;
 
 }
 
-updateToolSelect();
-drawHistory();
-drawToolList();
+loadFromFirebase();
+
+async function loadFromFirebase(){
+
+  const doc =
+    await db.collection("data")
+            .doc("shared")
+            .get();
+
+  const data = doc.data();
+
+  if(data){
+
+    tools = data.tools || [];
+    histories = data.histories || [];
+
+    drawTools();
+    drawHistory();
+    drawToolList();
+    updateToolSelect();
+
+  }
+
+}    
+    
 function drawToolList(){
 
 let keyword =
