@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>工具管理アプリ Ver2</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    text-align:center;
+    margin:20px;
+}
+
+.page{
+    display:none;
+}
+
+.active{
+    display:block;
+}
+
+button{
+    padding:15px;
+    margin:10px;
+    font-size:18px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- ホーム -->
+<div id="home" class="page active">
+
+<h1>工具管理アプリ</h1>
+
+<button onclick="showPage('listPage')">
+📦 工具一覧
+</button>
+
+<br>
+
+<button onclick="showPage('toolPage')">
+🔧 工具登録
+</button>
+
+<br>
+
+<button onclick="showPage('historyPage')">
+📝 持出・追加履歴
+</button>
+
+</div>
+<!-- 工具登録 -->
+<div id="toolPage" class="page">
+
+<h1>工具登録</h1>
+
+<button onclick="showPage('home')">
+← ホームへ戻る
+</button>
+
+<h3>工具追加</h3>
+
+<input type="text" id="newName" placeholder="品名">
+
+<input type="text" id="newModel" placeholder="型式">
+
+<input type="number" id="newStock" placeholder="在庫">
+
+<br><br>
+
+<input
+type="file"
+id="newImage"
+accept="image/*">
+
+<br><br>
+
+<button onclick="addTool()">追加</button>
+
+<br><br>
+
+<input
+type="text"
+id="search"
+placeholder="検索"
+onkeyup="drawTools()">
+
+<hr>
+
+<div id="toolList"></div>
+
+</div>
+
+<div id="listPage" class="page">
+
+<h1>工具一覧</h1>
+
+<button onclick="showPage('home')">
+← ホームへ戻る
+</button>
+
+<br><br>
+
+<input
+type="text"
+id="toolListSearch"
+placeholder="品名・型式で検索"
+onkeyup="drawToolList()">
+
+<br><br>
+
+<div id="toolListView"></div>
+
+</div>
+
+<!-- 履歴 -->
+<div id="historyPage" class="page">
+
+<h1>持出・追加履歴</h1>
+
+<button onclick="showPage('home')">
+← ホームへ戻る
+</button>
+
+<h3>履歴登録</h3>
+
+<p>日付</p>
+<input type="date" id="historyDate">
+
+<p>名前</p>
+<input type="text" id="historyName" placeholder="名前">
+
+<p>工具</p>
+<select id="historyTool"></select>
+
+<p>区分</p>
+<select id="historyType">
+    <option value="持出">持出</option>
+    <option value="追加">追加</option>
+</select>
+
+<p>数量</p>
+<input type="number" id="historyQty" value="1" min="1">
+
+<br><br>
+
+<button onclick="addHistory()">
+登録
+</button>
+
+<hr>
+
+<h3>履歴一覧</h3>
+
+<input
+type="text"
+id="historySearch"
+placeholder="名前・工具で検索"
+onkeyup="drawHistory()">
+
+<br><br>
+
+<div id="historyList"></div>
+
+</div>
+
+<script>
+
+function showPage(pageId){
+
+document.querySelectorAll('.page')
+.forEach(page=>{
+page.classList.remove('active');
+});
+
+document
+.getElementById(pageId)
+.classList.add('active');
+
+}
+const FIREBASE_MODE = true;
+const FIREBASE_PROJECT = "tool-app-a7019";
+
+console.log("Firebase Project:", FIREBASE_PROJECT);
+
+let tools = JSON.parse(localStorage.getItem("tools"));
+let histories =
+JSON.parse(localStorage.getItem("histories")) || [];
+if(!tools){
+
+tools = [
+
+{name:"ソケット(MITO)",model:"P4L-22",stock:1,image:""},
+{name:"バッテリー(マキタ)",model:"BL1015K",stock:1,image:""},
+{name:"ソケット(MITO)",model:"P4L-17",stock:1,image:""},
+{name:"MITOROY(アペックス)",model:"17",stock:1,image:""},
+{name:"充電器(マキタ)",model:"DC10WA",stock:1,image:""}
+
+];
+
+}
+
+function saveData(){
+
+localStorage.setItem(
+"tools",
+JSON.stringify(tools)
+);
+
+localStorage.setItem(
+"histories",
+JSON.stringify(histories)
+);
+
+}
+
+
+function addTool(){
+
+let name =
+document.getElementById("newName").value;
+
+let model =
+document.getElementById("newModel").value;
+
+let stock =
+document.getElementById("newStock").value;
+
+if(name==="" || model==="" || stock===""){
+alert("全て入力してください");
+return;
+}
+
+let file =
+document.getElementById("newImage").files[0];
+
+if(file){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+tools.push({
+name:name,
+model:model,
+stock:Number(stock),
+image:e.target.result
+});
+
+saveData();
+drawTools();
+drawToolList();
+updateToolSelect();
+
+};
+
+reader.readAsDataURL(file);
+
+return;
+
+}
+
+tools.push({
+name:name,
+model:model,
+stock:Number(stock),
+image:""
+});
+
+saveData();
+
+document.getElementById("newName").value="";
+document.getElementById("newModel").value="";
+document.getElementById("newStock").value="";
+document.getElementById("newImage").value="";
+
+drawTools();
+drawToolList();
+updateToolSelect();
+}
+
+function plusStock(index){
+tools[index].stock++;
+saveData();
+drawTools();
+drawToolList();
+}
+
+
+function minusStock(index){
+
+if(tools[index].stock > 0){
+tools[index].stock--;
+}
+
+saveData();
+drawTools();
+
+}
+
+function deleteTool(index){
+
+if(confirm("削除しますか？")){
+
+tools.splice(index,1);
+
+saveData();
+
+drawTools();
+
+}
+
+}
+
+function drawTools(){
+
+let keyword =
+document.getElementById("search")
+.value
+.toLowerCase();
+
+let html="";
+
+tools.forEach((tool,index)=>{
+
+if(
+!tool.name.toLowerCase().includes(keyword)
+&&
+!tool.model.toLowerCase().includes(keyword)
+){
+return;
+}
+
+html += `
+
+<div style="
+border:1px solid #ccc;
+padding:10px;
+margin:10px;
+">
+
+<h3>${tool.name}</h3>
+
+<p>${tool.model}</p>
+
+<p>在庫：${tool.stock}</p>
+
+<button onclick="plusStock(${index})">
+＋
+</button>
+
+<button onclick="minusStock(${index})">
+－
+</button>
+
+<button onclick="deleteTool(${index})">
+削除
+</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("toolList").innerHTML = html;
+
+}
+
+drawTools();
+function updateToolSelect(){
+
+let html = "";
+
+tools.forEach((tool,index)=>{
+
+html += `
+<option value="${index}">
+${tool.name}（${tool.model}）
+</option>
+`;
+
+});
+
+document.getElementById("historyTool").innerHTML = html;
+
+}
+
+function addHistory(){
+
+let date =
+document.getElementById("historyDate").value;
+
+let name =
+document.getElementById("historyName").value;
+
+let toolIndex =
+document.getElementById("historyTool").value;
+
+let type =
+document.getElementById("historyType").value;
+
+let qty =
+Number(
+document.getElementById("historyQty").value
+);
+
+if(date==="" || name===""){
+alert("入力してください");
+return;
+}
+
+if(type==="持出"){
+
+if(tools[toolIndex].stock < qty){
+alert("在庫不足です");
+return;
+}
+
+tools[toolIndex].stock -= qty;
+
+}else{
+
+tools[toolIndex].stock += qty;
+
+}
+
+histories.unshift({
+
+date:date,
+name:name,
+tool:
+tools[toolIndex].name +
+"（" +
+tools[toolIndex].model +
+"）",
+
+type:type,
+qty:qty
+
+});
+
+saveData();
+
+drawTools();
+drawHistory();
+
+}
+
+function drawHistory(){
+
+let keyword =
+document.getElementById("historySearch")
+? document.getElementById("historySearch").value.toLowerCase()
+: "";
+
+let html = `
+
+<table style="
+width:100%;
+border-collapse:collapse;
+">
+
+<tr>
+<th style="border:1px solid black;padding:8px;">日付</th>
+<th style="border:1px solid black;padding:8px;">名前</th>
+<th style="border:1px solid black;padding:8px;">工具</th>
+<th style="border:1px solid black;padding:8px;">区分</th>
+<th style="border:1px solid black;padding:8px;">数量</th>
+</tr>
+
+`;
+
+histories.forEach(item=>{
+
+if(
+!item.name.toLowerCase().includes(keyword)
+&&
+!item.tool.toLowerCase().includes(keyword)
+){
+return;
+}
+
+html += `
+<tr>
+
+<td style="border:1px solid black;padding:8px;">
+${item.date}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${item.name}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${item.tool}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${item.type}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${item.qty}
+</td>
+
+</tr>
+`;
+
+});
+
+html += "</table>";
+
+document.getElementById("historyList").innerHTML = html;
+
+}
+
+updateToolSelect();
+drawHistory();
+drawToolList();
+function drawToolList(){
+
+let keyword =
+document.getElementById("toolListSearch")
+? document.getElementById("toolListSearch").value.toLowerCase()
+: "";
+
+let html = `
+
+<table style="
+width:100%;
+border-collapse:collapse;
+">
+
+<tr>
+<th style="border:1px solid black;padding:8px;">画像</th>
+<th style="border:1px solid black;padding:8px;">品名</th>
+<th style="border:1px solid black;padding:8px;">型式</th>
+<th style="border:1px solid black;padding:8px;">在庫</th>
+</tr>
+`;
+
+tools.forEach(tool=>{
+
+let bgColor = "";
+
+if(tool.stock <= 1){
+    bgColor = "#ff9999";
+}
+else if(tool.stock <= 5){
+    bgColor = "#fff59d";
+}
+
+if(
+!tool.name.toLowerCase().includes(keyword)
+&&
+!tool.model.toLowerCase().includes(keyword)
+){
+return;
+}
+
+html += `
+
+
+<tr style="background-color:${bgColor}">
+
+<td style="border:1px solid black;padding:8px;">
+
+${
+tool.image
+?
+`<img src="${tool.image}"
+style="width:80px;height:80px;object-fit:cover;">`
+:
+"画像なし"
+}
+
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${tool.name}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${tool.model}
+</td>
+
+<td style="border:1px solid black;padding:8px;">
+${tool.stock}
+</td>
+
+</tr>
+`;
+
+});
+
+html += "</table>";
+
+document.getElementById("toolListView").innerHTML = html;
+
+}
+</script>
+
+</body>
+</html>9:41 2026/11/23
