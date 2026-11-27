@@ -240,7 +240,15 @@ localStorage.setItem(
 "histories",
 JSON.stringify(histories)
 );
+if(FIREBASE_MODE){
 
+    await db
+      .collection("data")
+      .doc("shared")
+      .set({
+        tools: tools,
+        histories: histories
+      });
 }
 
 
